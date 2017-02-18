@@ -145,7 +145,7 @@ while done:
         zet.hardness += 0.1
         hero.score += int(arrow.bet*zet.hardness)
         arrow.bet = 0
-        arrow.goal = '˄'
+        arrow.goal = '^'
 
 
 

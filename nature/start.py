@@ -5,13 +5,6 @@ import os
 import time
 import random
 
-
-x_limit = 400
-y_limit = 400
-window = pygame.display.set_mode((x_limit, y_limit))
-pygame.display.set_caption('Nature: Ground Boost')
-screen = pygame.Surface((x_limit, y_limit))
-
 def timing(f):
     def wrap(*args):
         time1 = time.time()
@@ -21,9 +14,9 @@ def timing(f):
         return ret
     return wrap
 
-def intrsect(s1_x, s2_x, s1_y, s2_y, sprite_size):
-    if ((s1_x > s2_x-sprite_size) and (s1_x < s2_x+sprite_size) and
-       (s1_y > s2_y - sprite_size) and (s1_y < s2_y + sprite_size)):
+def intrsect(s1_x, s2_x, s1_y, s2_y, s1_x_size, s2_x_size, s1_y_size, s2_y_size):
+    if ((s1_x > s2_x - s1_x_size) and (s1_x < s2_x + s2_x_size) and
+       (s1_y > s2_y - s1_y_size) and (s1_y < s2_y + s2_y_size)):
 
         return True
     else:
@@ -49,60 +42,130 @@ class Sprite:
             self.bitmap_last_change_timestamp = time.time()
         screen.blit(pygame.image.load(self.sprite_set[self.bitmap_counter]), (self.x, self.y))
 
-    def move(self, direction):
+    def move(self, direction, step=1):
         if 'up' in direction:
-            self.y -= 1
+            self.y -= step
         if 'dn' in direction:
-            self.y += 1
+            self.y += step
         if 'lf' in direction:
-            self.x -= 1
+            self.x -= step
         if 'rt' in direction:
-            self.x += 1
+            self.x += step
+
+    def set_invisible(self):
+        self.x = -40
+        self.y = 350
+
+x_limit = 400
+y_limit = 430
+window = pygame.display.set_mode((x_limit, y_limit))
+pygame.display.set_caption('Nature: Ground Boost')
+screen = pygame.Surface((400, 400))
 
 
-hero = Sprite(350, 200, 'resources/images/sprites/demo/picachu_40')
-hero.up = True
-zet = Sprite(10, 20, 'resources/images/sprites/demo/bluman_40')
-zet.up = True
-#cat = Sprite(80, 0, 'resources/images/sprites/demo/catwoman_40')
+hero = Sprite(200, 350, 'resources/images/sprites/demo/picachu_40')
+hero.score = 0
+zet = Sprite(10, 10, 'resources/images/sprites/demo/bluman_40')
+zet.left = True
+zet.hardness = 1
+arrow = Sprite(-40, 350, 'resources/images/sprites/demo/arrow_13_40')
+arrow.push = False
+arrow.bet = 0
+arrow.goal = '-'
+info_string = pygame.Surface((400, 30))
+pygame.font.init()
+speed_font = pygame.font.Font(None, 16)
+
 
 done = True
+pygame.key.set_repeat(1, 1)
 while done:
     for e in pygame.event.get():
         #print str(e)
         if e.type == pygame.QUIT:
             done = False
+        if e.type == pygame.KEYDOWN:
+            if e.key == pygame.K_LEFT:
+                if hero.x > 10:
+                    hero.move('lf', 1)
+            if e.key == pygame.K_RIGHT:
+                if hero.x < 350:
+                    hero.move('rt', 1)
+            if e.key == pygame.K_UP:
+                if hero.y > 150:
+                    hero.move('up', 1)
+            if e.key == pygame.K_DOWN:
+                if hero.y < 350:
+                    hero.move('dn', 1)
+            if e.key == pygame.K_SPACE:
+                if not arrow.push:
+                    arrow.x = hero.x + 13
+                    arrow.y = hero.y
+                    arrow.push = True
+                    arrow.bet = arrow.y - zet.y
+        if e.type == pygame.MOUSEMOTION:
+            pygame.mouse.set_visible(False)
+            m = pygame.mouse.get_pos()
+            if m[0] > 10 and m[0] < 350:
+                hero.x = m[0]
+            if m[1] > 150 and m[1] < 350:
+                hero.y = m[1]
+        if e.type == pygame.MOUSEBUTTONDOWN:
+            if e.button == 1:
+                if not arrow.push:
+                    arrow.x = hero.x + 13
+                    arrow.y = hero.y
+                    arrow.push = True
+                    arrow.bet = arrow.y - zet.y
+
+
+
+
 
     screen.fill((0, 100, 100))
+    info_string.fill((0, 50, 30))
 
-    if hero.up == True:
-        hero.move('up')
-        if hero.y == 0:
-            hero.up = False
+    if zet.left == True:
+        zet.move('lf', zet.hardness)
+        if zet.x <= 0:
+            zet.left = False
     else:
-        hero.move('dn')
-        if hero.y == 360:
-            hero.up = True
+        zet.move('rt', zet.hardness)
+        if zet.x >= 360:
+            zet.left = True
 
-    if zet.up == True:
-        zet.move('up')
-        if zet.y == 0:
-            zet.up = False
+    if arrow.y < 0:
+        arrow.push = False
+        hero.score -= int(arrow.bet/(2*zet.hardness))
+        arrow.bet = 0
+        arrow.goal = 'v'
+
+    if intrsect(arrow.x, zet.x, arrow.y, zet.y, 13, 40, 40, 40):
+        arrow.push = False
+        zet.hardness += 0.1
+        hero.score += int(arrow.bet*zet.hardness)
+        arrow.bet = 0
+        arrow.goal = '˄'
+
+
+
+    if not arrow.push:
+        arrow.set_invisible()
     else:
-        zet.move('dn')
-        if zet.y == 360:
-            zet.up = True
-
-    if intrsect(hero.x, zet.x, hero.y, zet.y, 40):
-        hero.up = not hero.up
-        zet.up = not zet.up
-
-
+        arrow.move('up')
 
     hero.render()
     zet.render()
-    #cat.render()
+    arrow.render()
+    info_string.blit(speed_font.render('Speed: {} '.format(zet.hardness), 1, (210, 120, 200)), (250, 5))
+    info_string.blit(speed_font.render('Score: {} {} shot: +{} -{}'.format(hero.score,
+                                                                       arrow.goal,
+                                                                       int(arrow.bet*zet.hardness),
+                                                                       int(arrow.bet/(2*zet.hardness))),
+                                       1, (210, 120, 200)), (10, 5))
 
-    window.blit(screen, (0, 0))
+
+    window.blit(info_string, (0, 0))
+    window.blit(screen, (0, 30))
     pygame.display.flip()
     pygame.time.delay(5)

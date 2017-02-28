@@ -2,6 +2,7 @@
 
 import pygame
 import os
+import sys
 import time
 import random
 
@@ -21,6 +22,65 @@ def intrsect(s1_x, s2_x, s1_y, s2_y, s1_x_size, s2_x_size, s1_y_size, s2_y_size)
         return True
     else:
         return False
+
+class Menu:
+    def __init__(self, items = [120, 140 , u'menuitem1', (255,250,30), (250,130,250), 0]):
+        self.items = items
+
+    def render(self, canvas, font, item_idx):
+        for i in self.items:
+            if item_idx == i[5]:
+                canvas.blit(font.render(i[2], 1, i[4]), (i[0], i[1]-50))
+            else:
+                canvas.blit(font.render(i[2], 1, i[3]), (i[0], i[1]-50))
+
+    def menu(self):
+        done = True
+        font_menu = pygame.font.Font('E:/python_projects/Nature/nature/resources/fonts/10369.ttf', 50)
+        #font_menu = pygame.font.Font(None, 50)
+        pygame.key.set_repeat(0, 0)
+        pygame.mouse.set_visible(True)
+        punkt = 0
+
+
+
+        while done:
+            info_string.fill((0, 150, 200))
+            screen.fill((0, 150, 200))
+            mp = pygame.mouse.get_pos()
+            for i in self.items:
+                if mp[0] > i[0] and mp[0] < i[0] + 100 and mp[1] > i[1] and mp[1] < i[1] + 60:
+                    punkt = i[5]
+            self.render(screen, font_menu, punkt)
+
+            for e in pygame.event.get():
+                if e.type == pygame.QUIT:
+                    sys.exit()
+                if e.type == pygame.KEYDOWN:
+                    if e.key == pygame.K_ESCAPE:
+                        sys.exit()
+                    if e.key == pygame.K_UP:
+                        if punkt > 0:
+                            punkt -=1
+                    if e.key == pygame.K_DOWN:
+                        if punkt < len(self.items) -1:
+                            punkt +=1
+                    if e.key == pygame.K_KP_ENTER or e.key == pygame.K_RETURN:
+                        print "ENTER"
+                        if punkt == 0:
+                            done = False
+                        elif punkt == 1:
+                            sys.exit()
+
+                if e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
+                    if punkt == 0:
+                        done = False
+                    elif punkt == 1:
+                        sys.exit()
+            window.blit(info_string, (0, 0))
+            window.blit(screen, (0, 30))
+            pygame.display.flip()
+
 
 class Sprite:
     def __init__(self, xpos, ypos, images_path):
@@ -69,13 +129,22 @@ zet = Sprite(10, 10, 'resources/images/sprites/demo/bluman_40')
 zet.left = True
 zet.hardness = 1
 arrow = Sprite(-40, 350, 'resources/images/sprites/demo/arrow_13_40')
+
+
+pygame.font.init()
 arrow.push = False
 arrow.bet = 0
 arrow.goal = '-'
 info_string = pygame.Surface((400, 30))
-pygame.font.init()
+
 speed_font = pygame.font.Font(None, 16)
 
+items = [(120, 140 , u'start', (255,250,30), (250,130,250), 0),
+         (120, 180 , u'exit', (255,250,30), (250,130,250), 1)]
+
+
+game = Menu(items)
+game.menu()
 
 done = True
 pygame.key.set_repeat(1, 1)
@@ -103,6 +172,10 @@ while done:
                     arrow.y = hero.y
                     arrow.push = True
                     arrow.bet = arrow.y - zet.y
+            if e.key == pygame.K_ESCAPE:
+                game.menu()
+                pygame.key.set_repeat(1, 1)
+                pygame.mouse.set_visible(False)
         if e.type == pygame.MOUSEMOTION:
             pygame.mouse.set_visible(False)
             m = pygame.mouse.get_pos()

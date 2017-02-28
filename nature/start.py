@@ -122,7 +122,7 @@ window = pygame.display.set_mode((x_limit, y_limit))
 pygame.display.set_caption('Nature: Ground Boost')
 screen = pygame.Surface((400, 400))
 
-
+#comment test
 hero = Sprite(200, 350, 'resources/images/sprites/demo/picachu_40')
 hero.score = 0
 zet = Sprite(10, 10, 'resources/images/sprites/demo/bluman_40')
